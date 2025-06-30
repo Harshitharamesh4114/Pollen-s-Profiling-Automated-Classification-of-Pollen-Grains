@@ -1,0 +1,156 @@
+{% extends "complete_base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-microscope me-3"></i>
+                Pollen Grain Classification
+            </h1>
+            <p class="lead text-muted">
+                Upload a pollen grain image for automated species identification using our trained CNN model.
+                Supports 23+ pollen types from the Brazilian Savannah region.
+            </p>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-upload me-2"></i>
+                        Upload Pollen Image
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <div class="mb-4">
+                            <label for="imageInput" class="form-label">
+                                <strong>Select Image File</strong>
+                            </label>
+                            <input type="file" 
+                                   class="form-control form-control-lg" 
+                                   id="imageInput" 
+                                   name="image" 
+                                   accept="image/*" 
+                                   required>
+                            <div class="form-text">
+                                Supported formats: PNG, JPG, JPEG, BMP, TIFF (Max: 16MB)
+                            </div>
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div id="imagePreview" class="mb-4" style="display: none;">
+                            <div class="card">
+                                <div class="card-header">
+                                    <small class="text-muted">Image Preview</small>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img id="previewImage" src="" alt="Preview" class="img-fluid rounded" style="max-height: 300px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="fas fa-brain me-2"></i>
+                                Classify Pollen
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Section -->
+    <div class="row mt-5">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-leaf fa-3x text-success mb-3"></i>
+                    <h5>Environmental Monitoring</h5>
+                    <p class="small text-muted">
+                        Study plant biodiversity and ecological patterns through automated pollen analysis.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-hospital-user fa-3x text-info mb-3"></i>
+                    <h5>Allergy Diagnosis</h5>
+                    <p class="small text-muted">
+                        Assist healthcare professionals in identifying pollen allergens for better treatment.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-seedling fa-3x text-warning mb-3"></i>
+                    <h5>Agricultural Research</h5>
+                    <p class="small text-muted">
+                        Support crop management and breeding strategies through pollen classification.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Details -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Technical Specifications
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <strong>CNN Model</strong><br>
+                            <small class="text-muted">Deep Learning Architecture</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <strong>23+ Classes</strong><br>
+                            <small class="text-muted">Brazilian Savannah Species</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <strong>128×128</strong><br>
+                            <small class="text-muted">Input Resolution</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <strong>4.2M+ Params</strong><br>
+                            <small class="text-muted">Model Parameters</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Analyzing Pollen Image...</h5>
+                <p class="text-muted mb-0">Please wait while our AI model processes your image.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pollen Profiling - Automated Classification{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Custom styles for Pollen Profiling application */
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+        
+        .form-control-lg {
+            border-radius: 0.5rem;
+            border: 2px dashed var(--bs-border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .form-control-lg:hover {
+            border-color: var(--bs-primary);
+            background-color: var(--bs-secondary-bg);
+        }
+        
+        .card {
+            border-radius: 0.75rem;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .progress {
+            border-radius: 1rem;
+            background-color: var(--bs-secondary-bg);
+        }
+        
+        .progress-bar {
+            border-radius: 1rem;
+            transition: width 0.6s ease;
+        }
+        
+        .btn {
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-lg {
+            padding: 0.75rem 2rem;
+        }
+        
+        #imagePreview img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        footer {
+            border-top: 1px solid var(--bs-border-color);
+        }
+        
+        @media (max-width: 768px) {
+            .display-4 {
+                font-size: 2rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .btn-lg {
+                padding: 0.6rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-seedling me-2"></i>
+                Pollen Profiling
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h6>About Pollen Profiling</h6>
+                    <p class="small mb-0">
+                        Automated classification of pollen grains using advanced CNN technology.
+                        Designed for environmental monitoring, allergy diagnosis, and agricultural research.
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <p class="small mb-0">
+                        <i class="fas fa-leaf me-1"></i>
+                        Brazilian Savannah Pollen Dataset
+                    </p>
+                    <p class="small mb-0">
+                        <i class="fas fa-brain me-1"></i>
+                        Powered by Deep Learning
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Upload and preview functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageInput = document.getElementById('imageInput');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImage = document.getElementById('previewImage');
+            const uploadForm = document.getElementById('uploadForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingModal = document.getElementById('loadingModal') ? new bootstrap.Modal(document.getElementById('loadingModal')) : null;
+
+            // Image preview functionality
+            if (imageInput) {
+                imageInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    
+                    if (file) {
+                        // Validate file type
+                        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/bmp', 'image/tiff'];
+                        if (!allowedTypes.includes(file.type)) {
+                            showAlert('Please select a valid image file (PNG, JPG, JPEG, BMP, TIFF)', 'error');
+                            imageInput.value = '';
+                            if (imagePreview) imagePreview.style.display = 'none';
+                            return;
+                        }
+
+                        // Validate file size (16MB limit)
+                        const maxSize = 16 * 1024 * 1024;
+                        if (file.size > maxSize) {
+                            showAlert('File size too large. Please select an image smaller than 16MB.', 'error');
+                            imageInput.value = '';
+                            if (imagePreview) imagePreview.style.display = 'none';
+                            return;
+                        }
+
+                        // Create preview
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (previewImage && imagePreview) {
+                                previewImage.src = e.target.result;
+                                imagePreview.style.display = 'block';
+                                imagePreview.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        if (imagePreview) imagePreview.style.display = 'none';
+                    }
+                });
+            }
+
+            // Form submission with loading state
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', function(event) {
+                    const file = imageInput.files[0];
+                    
+                    if (!file) {
+                        event.preventDefault();
+                        showAlert('Please select an image file first.', 'error');
+                        return;
+                    }
+
+                    // Show loading modal
+                    if (loadingModal) loadingModal.show();
+                    
+                    // Disable submit button
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                    }
+                });
+            }
+
+            // Utility function to show alerts
+            function showAlert(message, type = 'info') {
+                const alertContainer = document.querySelector('.container .alert');
+                if (alertContainer) {
+                    alertContainer.remove();
+                }
+
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                const container = document.querySelector('.container');
+                if (container) {
+                    const firstChild = container.firstElementChild;
+                    container.insertBefore(alertDiv, firstChild);
+                }
+
+                // Auto dismiss after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

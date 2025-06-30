@@ -1,0 +1,159 @@
+{% extends "complete_base.html" %}
+
+{% block title %}Classification Result - Pollen Profiling{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Classification Complete
+            </h1>
+            <p class="lead text-muted">Analysis results for your pollen grain sample</p>
+        </div>
+    </div>
+
+    {% if prediction %}
+    <div class="row">
+        <!-- Image Display -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-image me-2"></i>
+                        Uploaded Image
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename=image_path) }}" 
+                         alt="Uploaded pollen image" 
+                         class="img-fluid rounded shadow"
+                         style="max-height: 400px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="col-lg-6">
+            <!-- Primary Result -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-award me-2"></i>
+                        Primary Classification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-success">{{ prediction.predicted_class }}</h3>
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: {{ prediction.confidence }}%;">
+                            {{ "%.1f"|format(prediction.confidence) }}%
+                        </div>
+                    </div>
+                    <small class="text-muted">Confidence Score</small>
+                </div>
+            </div>
+
+            <!-- Top 3 Predictions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-ol me-2"></i>
+                        Top 3 Predictions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for pred in prediction.top_3 %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="badge bg-{{ 'success' if loop.index0 == 0 else 'secondary' }} me-2">
+                                {{ loop.index }}
+                            </span>
+                            <strong>{{ pred.class }}</strong>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold">{{ "%.1f"|format(pred.confidence) }}%</span>
+                            <div class="progress mt-1" style="width: 100px; height: 8px;">
+                                <div class="progress-bar bg-{{ 'success' if loop.index0 == 0 else 'info' }}" 
+                                     style="width: {{ pred.confidence }}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not loop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Results -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Detailed Classification Scores
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for class_name, confidence in prediction.all_predictions.items() %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-truncate me-2" title="{{ class_name }}">{{ class_name }}</small>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress me-2" style="width: 60px; height: 6px;">
+                                        <div class="progress-bar" style="width: {{ confidence }}%;"></div>
+                                    </div>
+                                    <small class="text-muted">{{ "%.1f"|format(confidence) }}%</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-upload me-2"></i>
+                Analyze Another Image
+            </a>
+            <button class="btn btn-outline-secondary btn-lg" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>
+                Print Results
+            </button>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Error State -->
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card border-danger">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h4>Classification Failed</h4>
+                    <p class="text-muted">
+                        We couldn't analyze your image. Please ensure it's a valid pollen grain image and try again.
+                    </p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Try Again
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
